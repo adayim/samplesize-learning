@@ -1,0 +1,28 @@
+model{
+  
+  gp ~ dmnorm(mu,Sigma.inv)
+  Sigma.inv <- inverse(Sigma)
+  # gp[1:N] ~ dmnorm.vcov(mu[1:N], Sigma[1:N, 1:N]) 
+  
+  for (i in 1:N) {
+    
+    mu[i] <- 1 - alpha - beta * x[i] ^ (-gamma)
+    Sigma[i,i] <- sigma_g^2 + 0.00001
+    
+    for (j in (i+1):N) {
+      Sigma[i,j] <- sigma_g^2*exp(-pow(phi*d[i,j],2))
+      Sigma[j,i] <- Sigma[i,j]
+    }
+    y[i]~dnorm(gp[i], w[i] * tau)
+  }
+  
+  # priors
+  alpha ~ dbeta(1.2, 1.8)
+  beta  ~ dnorm(b[1], b[2])
+  gamma ~ dbeta(c[1], c[2])
+  
+  sigma_g ~ dnorm(s[1], s[2])T(0,)
+  phi ~ dnorm(p[1], p[2])T(0,)
+  sigma_y ~ dnorm(0, 0.1)T(0,)
+  tau <- sigma_y^-2 
+}
